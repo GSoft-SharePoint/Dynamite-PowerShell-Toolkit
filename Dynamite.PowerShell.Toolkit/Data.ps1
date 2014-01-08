@@ -128,7 +128,7 @@ function Add-DSPSampleContent
 	
 	$Config = [xml](Get-Content $XmlPath)
 	
-		# Process all Term Groups
+    # Process all Term Groups
 	$Config.Configuration.Web | ForEach-Object {
 	
 		$web = Get-SPWeb -Identity $_.Url
@@ -143,6 +143,11 @@ function Add-DSPSampleContent
 
             Add-ListContent $list $_ $Overwrite $SyncVariations
         }   
+
+        if($SyncVariations)
+        {
+            Start-ListItemPropagation $web.Site.WebApplication
+        }
 	}
 }
 
