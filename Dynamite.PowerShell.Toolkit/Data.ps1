@@ -260,12 +260,21 @@ function Process-Fields
         }  
     }
 
-    #HTML Fields
+    # HTML Fields
     if($ContentType.HTMLFields -ne $null)
     {
         $ContentType.HTMLFields.Field | ForEach-Object {
                     
             Process-HTMLField $SPListItem $folders["HTMLFields"] $_  
+        }  
+    }
+
+    # Boolean Fields
+    if($ContentType.BooleanFields -ne $null)
+    {
+        $ContentType.BooleanFields.Field | ForEach-Object {
+                    
+            Process-BooleanField $SPListItem $_  
         }  
     }
 
@@ -397,4 +406,21 @@ function Process-HTMLField
 
         $SPListItem[$Field.InternalName] = $articleText
     }
+}
+
+function Process-BooleanField
+{
+    param
+	(
+        [Parameter(Mandatory=$true, Position=0)]
+		[Microsoft.SharePoint.SPListItem]$SPListItem,
+
+        [Parameter(Mandatory=$true, Position=1)]
+		$Field
+	)
+   
+	# Get a random content
+	$booleanValue = Get-Random "True","False" -Count 1
+    
+	$SPListItem[$Field.InternalName] = [System.Convert]::ToBoolean($booleanValue)   
 }
