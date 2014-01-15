@@ -87,15 +87,25 @@
         </Configuration>
 
 
-	.PARAMETER  XmlPath
+	.PARAMETER  XmlPath (Mandatory)
 		Physical path of the XML configuration file.
 		
-	.PARAMETER  Overwrite
+	.PARAMETER  Overwrite (Optionnal)
 		If true, overwrite field values of existing items in the library. Otherwise, create new items.
+
+	.PARAMETER  SyncVariations (Optionnal)
+		If true, synchronize items with all variation branches.
+
+	.PARAMETER  ImagesUploadWebUrl (Optionnal)
+		If set, specifies the web that contains the images library. If not set, images will be uploaded in the default "Images" library on site collection the root web of the current proceded web.
+
+	.PARAMETER  ImagesUploadLibraryName (Optionnal)
+		If set, specifies the image library display name used to uplaod sample images.
 
 
 	.EXAMPLE
 		PS C:\> Add-DSPSampleContent "D:\Data.xml" -Overwrite
+        PS C:\> Add-DSPSampleContent "D:\Data.xml" -ImagesUploadWebUrl "http://mydoccenter/" -ImagesUploadLibraryName "Images"
 
 	.OUTPUTS
 		n/a. 
@@ -113,30 +123,41 @@
 #>
 function Add-DSPSampleContent
 {
-	[CmdletBinding()]
+	[CmdletBinding(DefaultParametersetName="Default")] 
 	param
 	(
-		[Parameter(Mandatory=$true, Position=0)]
+		[Parameter(ParameterSetName="Default", Mandatory=$true, Position=0)]
 		[string]$XmlPath,
 
-        [Parameter(Mandatory=$false, Position=1)]
+        [Parameter(ParameterSetName="Default",Mandatory=$false, Position=1)]
 		[switch]$Overwrite=$false,
 
-        [Parameter(Mandatory=$false, Position=2)]
-		[switch]$SyncVariations=$false     
+        [Parameter(ParameterSetName="Default",Mandatory=$false, Position=2)]
+		[switch]$SyncVariations=$false,
+
+        [Parameter(ParameterSetName="Default",Mandatory=$false, Position=3)]
+	    [string]$ImagesUploadWebUrl,
+
+        [Parameter(ParameterSetName="Default",Mandatory=$false, Position=4)]
+	    [string]$ImagesUploadLibraryName
 	)
 	
 	$Config = [xml](Get-Content $XmlPath)
 	
+    if(($ImagesUploadWebUrl -ne $null) -and ($ImagesUploadLibraryName -ne $null))
+    {
+        Set-Variable -Name "UploadWeb" -Value $ImagesUploadWebUrl -Scope script
+        Set-Variable -Name "UploadLibraryName" -Value $ImagesUploadLibraryName -Scope script
+        Set-Variable -Name "CustomImageLibrary" -value $true -Scope script
+    }
+
     # Process all Term Groups
 	$Config.Configuration.Web | ForEach-Object {
 	
 		$web = Get-SPWeb -Identity $_.Url
 		$webServerRelativeUrl = $web.ServerRelativeUrl
-
-        
+       
         $_.List | ForEach-Object {
-
 
             $listUrl = $webServerRelativeUrl + $_.WebRelativeUrl
             $list = $web.GetList($listUrl)
@@ -229,7 +250,6 @@ function Process-Fields
 
         [Parameter(Mandatory=$true, Position=2)]
 		$ContentType
-
 	)
 
     # Text Fields
@@ -297,19 +317,27 @@ function Process-ImageField
 		$Field
 	)
 
-    # Default Images Library of the Root Site Collection Web
-    $docLibName = "Images"
+    $isCustomLib = Get-Variable -Name "CustomImageLibrary" -Scope script
 
-    $rootWebUrl = $SPList.ParentWeb.Site.RootWeb.Url 
+    if($isCustomLib)
+    {
+        $webUrl = (Get-Variable -Name "UploadWeb" -Scope script).Value
+        $docLibName = (Get-Variable -Name "UploadLibraryName" -Scope script).Value
+    }
+    else
+    {
+        # Default Images Library of the Root Site Collection Web
+        $webUrl = $SPListItem.ParentList.ParentWeb.Site.RootWeb.Url
+        $docLibName = "Images" 
+    }
 
     if(((Get-ChildItem $FolderPath).Count -gt 0))
-    {  
-    
+    {     
         # Get a random image in the folder
         $imageFilePath = Get-ChildItem $FolderPath | Get-Random -Count 1
            
         # Upload the image in a SharePoint Library
-        $imagePath = Add-DSPFile $RootWebUrl $docLibName $imageFilePath.FullName $true
+        $imagePath = Add-DSPFile $webUrl $docLibName $imageFilePath.FullName $true
         $image = New-Object Microsoft.SharePoint.Publishing.Fields.ImageFieldValue
         $image.ImageUrl = $imagePath
      
