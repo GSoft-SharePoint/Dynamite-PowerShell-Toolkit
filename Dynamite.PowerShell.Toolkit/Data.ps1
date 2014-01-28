@@ -361,7 +361,7 @@ function Process-TextField
 
     if(((Get-ChildItem $FolderPath).Count -gt 0))
     {  
-        $textFieldFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -match $Field.InternalName }
+        $textFieldFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -like $Field.InternalName + "*"}
  
         $fieldName = [System.IO.Path]::GetFileNameWithoutExtension($textFieldFile)
 
@@ -394,7 +394,7 @@ function Process-TaxonomyField
 
     if(((Get-ChildItem $FolderPath).Count -gt 0))
     {  
-        $taxonomyFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -match $Field.AssociatedTermSet +"*" }
+        $taxonomyFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -like $Field.AssociatedTermSet + "*" }
 
         # Get a random taxonomy value
         $termSetValue = [System.IO.Path]::GetFileNameWithoutExtension($taxonomyFile)
