@@ -452,3 +452,126 @@ function Process-BooleanField
     
 	$SPListItem[$Field.InternalName] = [System.Convert]::ToBoolean($booleanValue)   
 }
+
+<#
+	.SYNOPSIS
+		Commandlet to add reusable content snippets
+
+	.DESCRIPTION
+		Add reusable content snippets for the site collection
+
+    --------------------------------------------------------------------------------------
+    Module 'Dynamite.PowerShell.Toolkit'
+    by: GSoft, Team Dynamite.
+    > GSoft & Dynamite : http://www.gsoft.com
+    > Dynamite Github : https://github.com/GSoft-SharePoint/Dynamite-PowerShell-Toolkit
+    > Documentation : https://github.com/GSoft-SharePoint/Dynamite-PowerShell-Toolkit/wiki
+    --------------------------------------------------------------------------------------
+   
+    .NOTES
+         Here is the Structure XML schema.
+
+        <Configuration>
+	        <Site Url="http://somewhere">
+		        <Snippet Title="Page inexistante (FR)" AutomaticUpdate="True" ShowInRibbon="True" >
+			        <Html><![CDATA[<p>Désolé, cette page n'est pas disponible dans en français, vous pouvez accéder à la page originale en cliquant <a id="peerPageUrl">ici</a><p>]]></Html>
+		        </Snippet>
+	        </Site>
+        </Configuration>
+
+	.PARAMETER  XmlPath (Mandatory)
+		Physical path of the XML configuration file.
+
+	.PARAMETER  Delete (Optionnal)
+		Delete the actual configuration
+
+	.EXAMPLE
+		PS C:\> Add-DSPReusableContentSnippets "D:\Data.xml" 
+        PS C:\> Add-DSPReusableContentSnippets "D:\Data.xml" -Delete
+
+	.OUTPUTS
+		n/a. 
+    
+  .LINK
+    GSoft, Team Dynamite on Github
+    > https://github.com/GSoft-SharePoint
+    
+    Dynamite PowerShell Toolkit on Github
+    > https://github.com/GSoft-SharePoint/Dynamite-PowerShell-Toolkit
+    
+    Documentation
+    > https://github.com/GSoft-SharePoint/Dynamite-PowerShell-Toolkit/wiki
+    
+#>
+function Add-DSPReusableContentSnippets
+{
+    [CmdletBinding()] 
+	param
+	(
+		[Parameter(Mandatory=$true, Position=0)]
+		[string]$XmlPath,
+
+		[Parameter(Mandatory=$false, Position=1)]
+		[switch]$Delete
+
+	)
+	
+	$Config = [xml](Get-Content $XmlPath -Encoding UTF8)
+
+    $reusableContentListIdPropertyName = "_ReusableContentListId";
+
+    $Config.Configuration.Site | ForEach-Object {
+                    
+        $site = Get-SPSite $_.Url
+
+        $rootWeb = $site.RootWeb
+
+        # Get the Reusable Content List
+        if ($rootWeb.AllProperties.ContainsKey($reusableContentListIdPropertyName))
+        {
+            [Guid]$reusableContentListId = New-Object System.Guid ($rootWeb.AllProperties[$reusableContentListIdPropertyName].ToString());
+            $list = $rootWeb.Lists[$reusableContentListId]
+
+            $_.Snippet | ForEach-Object {
+
+                $title = $_.Title
+
+                $spQuery = New-Object Microsoft.SharePoint.SPQuery
+                $camlQuery = '<Where><Eq><FieldRef Name="Title"/><Value Type="Text">'+ $title + '</Value></Eq></Where>'
+
+                $spQuery.Query = $camlQuery
+                $spQuery.RowLimit = 1
+                $spListItems = $list.GetItems($spQuery)
+
+                if($spListItems.Count -eq 0)
+                {            
+                    if($Delete -eq $false)
+                    {        
+                        # Add items
+                        $listItem = $list.Items.Add()
+                        $listItem["Title"] = $_.Title
+                        $listItem["ShowInRibbon"] = [System.Convert]::ToBoolean($_.ShowInRibbon)
+                        $listItem["AutomaticUpdate"] = [System.Convert]::ToBoolean($_.AutomaticUpdate)                   
+                        $listItem["ReusableHtml"] = $_.Html.InnerText
+                        $listItem.Update()
+                    }
+                    else
+                    {
+                        Write-Verbose "Reusable Snippet with title '$title' doesn't exists in the list"
+                    }
+                }
+                else
+                {
+                    Write-Verbose "Reusable Snippet with title '$title' already exists in the list"
+
+                    if($Delete)
+                    {
+                        Write-Verbose "Deleting Snippet with title '$title'"
+                        $list.Items.DeleteItemById($spListItems[0].ID)
+                    }
+                       
+                }
+            }
+        }
+    }    
+}
