@@ -339,7 +339,7 @@ function Process-ImageField
         # Upload the image in a SharePoint Library
         $imagePath = Add-DSPFile $webUrl $docLibName $imageFilePath.FullName $true
         $image = New-Object Microsoft.SharePoint.Publishing.Fields.ImageFieldValue
-        $image.ImageUrl = $imagePath
+        $image.ImageUrl = [Microsoft.SharePoint.Utilities.SPUtility]::ConcatUrls($webUrl, $imagePath)
      
         [Microsoft.SharePoint.Publishing.Fields.ImageFieldValue]$SPListItem[$Field.InternalName] = $image
     }
