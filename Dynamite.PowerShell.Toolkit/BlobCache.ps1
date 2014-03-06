@@ -74,6 +74,7 @@ function Enable-DSPBlobCache {
 	$WebApp = $WebApplication.Read()
 
 	# SPWebConfigModification to enable BlobCache
+    Write-Host "Enabling the BLOB cache on '$($WebApp.Url)'"
 	$configMod1 = New-Object Microsoft.SharePoint.Administration.SPWebConfigModification
 	$configMod1.Path = "configuration/SharePoint/BlobCache" 
 	$configMod1.Name = "enabled" 
@@ -84,12 +85,13 @@ function Enable-DSPBlobCache {
 	## SPWebConfigModificationType.EnsureSection -> 2
 	$configMod1.Type = 1
 	$configMod1.Value = "true" 
-	$WebApp.WebConfigModifications.Add( $configMod1 )
+	$WebApp.WebConfigModifications.Add($configMod1)
 	
 	# SPWebConfigModification to enable client-side Blob caching (max-age)
     if($MaxAge -gt 0)
     {
 
+        Write-Verbose "Configuring the 'max-age' to '$MaxAge'"
 	    $configMod2 = New-Object Microsoft.SharePoint.Administration.SPWebConfigModification
 	    $configMod2.Path = "configuration/SharePoint/BlobCache" 
 	    $configMod2.Name = "max-age" 
@@ -102,12 +104,13 @@ function Enable-DSPBlobCache {
 	
 	    $configMod2.Type = 1
 	    $configMod2.Value = $MaxAge.ToString() 
-	    $WebApp.WebConfigModifications.Add( $configMod2 )
+	    $WebApp.WebConfigModifications.Add($configMod2)
     }
 	
 	# SPWebConfigurationModification to move blobstore location
     if(-not [string]::IsNullOrEmpty($Location))
     {		
+        Write-Verbose "Configuring the 'location' to '$Location'"
 	    $configMod3 = New-Object Microsoft.SharePoint.Administration.SPWebConfigModification
 	    $configMod3.Path = "configuration/SharePoint/BlobCache" 		
 	    $configMod3.Name = "location"
@@ -115,13 +118,13 @@ function Enable-DSPBlobCache {
 	    $configMod3.Owner = "BlobCacheMod" 
 	    $configMod3.Type = 1
 	    $configMod3.Value = $Location
-	    $WebApp.WebConfigModifications.Add( $configMod3 )
+	    $WebApp.WebConfigModifications.Add($configMod3)
     }	
     
 	# SPWebConfigurationModification to configure max-size (in GB)
     if($MaxSize -gt 0)
     {
-
+        Write-Verbose "Configuring the 'maxSize' to '$MaxSize'"
 	    $configMod4 = New-Object Microsoft.SharePoint.Administration.SPWebConfigModification
 	    $configMod4.Path = "configuration/SharePoint/BlobCache" 
 	    $configMod4.Name = "maxSize" 
@@ -134,7 +137,7 @@ function Enable-DSPBlobCache {
 	
 	    $configMod4.Type = 1
 	    $configMod4.Value = $MaxSize.ToString() 
-	    $WebApp.WebConfigModifications.Add( $configMod4 )
+	    $WebApp.WebConfigModifications.Add($configMod4)
     }	
 		
 		
@@ -142,7 +145,6 @@ function Enable-DSPBlobCache {
 	# Update, and apply
 	$WebApp.Update()
 	$WebApp.Parent.ApplyWebConfigModifications()
-
 } 
 
 <#
@@ -191,17 +193,21 @@ function Disable-DSPBlobCache {
 	)
 	
 	$WebApp = $WebApplication.Read()
+
+    Write-Host "Disabling the BLOB cache on '$($WebApp.Url)'"
+
 	$mods = @()
 	foreach ($mod in $WebApp.WebConfigModifications) 
     {
-		if ( $mod.Owner -eq "BlobCacheMod" ) 
+		if ($mod.Owner -eq "BlobCacheMod") 
         {
 			$mods += $mod
 		}
     }
 		
-	foreach ( $mod in $mods ) 
+	foreach ($mod in $mods) 
     {
+        Write-Verbose "Removing web config modification '$($mod.Name)' on path '$($mod.Path)'"
 		[void] $WebApp.WebConfigModifications.Remove($mod)
 	}
 		
