@@ -80,7 +80,12 @@
                         -->
 				        <HTMLFields SampleFolder="D:\FR\HTMLFields">
 					        <Field InternalName="PublishingPageContent"/>
-				        </HTMLFields>		
+				        </HTMLFields>	
+
+				        <UserFields SampleFolder="D:\FR\UserFields">
+					        <Field InternalName="Owner"/>
+				        </UserFields>		
+
 			        </ContentType>
 		        </List>
 	        </Web>
@@ -192,7 +197,7 @@ function Add-ListContent
         $ListConfig.ContentType | ForEach-Object {
 
         $contentType = $_
-        $folders = @{"TextFields" = $_.TextFields.SampleFolder ; "ImageFields" = $_.ImageFields.SampleFolder ; "TaxonomyFields" = $_.TaxonomyFields.SampleFolder ; "HTMLFields" = $_.HTMLFields.SampleFolder }
+        $folders = @{"TextFields" = $_.TextFields.SampleFolder ; "ImageFields" = $_.ImageFields.SampleFolder ; "TaxonomyFields" = $_.TaxonomyFields.SampleFolder ; "HTMLFields" = $_.HTMLFields.SampleFolder; "UserFields" = $_.UserFields.SampleFolder }
 
         # If overwrite, replace all list items content for the content type
         if($Overwrite)
@@ -295,6 +300,15 @@ function Process-Fields
         $ContentType.BooleanFields.Field | ForEach-Object {
                     
             Process-BooleanField $SPListItem $_  
+        }  
+    }
+
+    # User Fields
+    if($ContentType.UserFields -ne $null)
+    {
+        $ContentType.UserFields.Field | ForEach-Object {
+                    
+            Process-UserField $SPListItem $folders["UserFields"] $_  
         }  
     }
 
@@ -451,6 +465,42 @@ function Process-BooleanField
 	$booleanValue = Get-Random "True","False" -Count 1
     
 	$SPListItem[$Field.InternalName] = [System.Convert]::ToBoolean($booleanValue)   
+}
+
+
+function Process-UserField
+{
+    param
+	(
+        [Parameter(Mandatory=$true, Position=0)]
+		[Microsoft.SharePoint.SPListItem]$SPListItem,
+
+		[Parameter(Mandatory=$true, Position=1)]
+		$FolderPath,
+
+        [Parameter(Mandatory=$true, Position=2)]
+		$Field
+	)
+
+    if(((Get-ChildItem $FolderPath).Count -gt 0))
+    {  
+        $textFieldFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -like $Field.InternalName + "*"}
+ 
+        $fieldName = [System.IO.Path]::GetFileNameWithoutExtension($textFieldFile)
+
+        # Get a random string value
+        $randomUser = Get-Content $textFieldFile.FullName | Get-Random -Count 1
+
+        # Get the user value
+        $web = $SPListItem.parentList.ParentWeb
+        $spUser = $web.EnsureUser($randomUser)
+
+
+        if ($spUser -ne $null)
+        {
+          $SPListItem[$fieldName] = $spUser  
+        }
+    }
 }
 
 <#
