@@ -146,6 +146,13 @@ function Add-DSPUserProfileProperty {
                 $userProperty.IsSearchable = [System.Convert]::ToBoolean($newProperty.GeneralSettings.IsSearchable)
                 $userProperty.IsMultivalued = [System.Convert]::ToBoolean($newProperty.GeneralSettings.IsMultivalued)
 
+                # If localized display names are configured, set them
+                if($newProperty.DisplayNames -ne $null) {
+                    $newProperty.DisplayNames.DisplayName | ForEach-Object {
+                        $userProperty.DisplayNameLocalized[[int]$_.LCID] = $_.Value;          
+                    } 
+                }
+
                 # Taxonomy Settings
 
                 if($newProperty.GeneralSettings.IsMultivalued -eq $true)
