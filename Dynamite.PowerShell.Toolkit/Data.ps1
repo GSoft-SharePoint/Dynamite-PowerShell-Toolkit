@@ -135,10 +135,10 @@ function Add-DSPSampleContent
 		[string]$XmlPath,
 
         [Parameter(ParameterSetName="Default",Mandatory=$false, Position=1)]
-		[switch]$Overwrite=$false,
+		[bool]$Overwrite=$false,
 
         [Parameter(ParameterSetName="Default",Mandatory=$false, Position=2)]
-		[switch]$SyncVariations=$false,
+		[bool]$SyncVariations=$false,
 
         [Parameter(ParameterSetName="Default",Mandatory=$false, Position=3)]
 	    [string]$ImagesUploadWebUrl,
