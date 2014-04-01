@@ -72,7 +72,16 @@ function Add-DSPUserProfileSection {
 				$section.Commit();
 				Write-Verbose "Section $SectionName created!" 
 			}
-
+			
+			# If localized display names are configured, set them
+			if($newSection.DisplayNames -ne $null) {
+				$newSection.DisplayNames.DisplayName | ForEach-Object {
+					Write-Verbose "Adding Section $SectionName display name $($_.Value) to LCID $($_.LCID)"
+					$section.DisplayNameLocalized[[int]$_.LCID] = $_.Value;          
+				} 
+				
+				$section.Commit();
+			}
 
             $newSection.UserProperty | ForEach-Object {
                 Add-DSPUserProfileProperty $UserProfileApplication $_ $Delete              
