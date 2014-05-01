@@ -302,6 +302,15 @@ function Process-Fields
             Process-BooleanField $SPListItem $_  
         }  
     }
+	
+	# Number Fields
+    if($ContentType.NumberFields -ne $null)
+    {
+        $ContentType.NumberFields.Field | ForEach-Object {
+                    
+            Process-NumberField $SPListItem $_  
+        }  
+    }
 
     # User Fields
     if($ContentType.UserFields -ne $null)
@@ -467,6 +476,22 @@ function Process-BooleanField
 	$SPListItem[$Field.InternalName] = [System.Convert]::ToBoolean($booleanValue)   
 }
 
+function Process-NumberField
+{
+    param
+	(
+        [Parameter(Mandatory=$true, Position=0)]
+		[Microsoft.SharePoint.SPListItem]$SPListItem,
+
+        [Parameter(Mandatory=$true, Position=1)]
+		$Field
+	)
+   
+	# Get a random content
+	$numberValue = Get-Random -Minimum 0 -Maximum 10
+    
+	$SPListItem[$Field.InternalName] = [System.Convert]::ToInt32($numberValue)   
+}
 
 function Process-UserField
 {
