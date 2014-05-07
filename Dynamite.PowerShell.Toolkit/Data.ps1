@@ -311,6 +311,15 @@ function Process-Fields
             Process-NumberField $SPListItem $_  
         }  
     }
+	
+	# DateTime Fields
+    if($ContentType.DateTimeFields -ne $null)
+    {
+        $ContentType.DateTimeFields.Field | ForEach-Object {
+                    
+            Process-DateTimeField $SPListItem $_  
+        }  
+    }
 
     # User Fields
     if($ContentType.UserFields -ne $null)
@@ -491,6 +500,20 @@ function Process-NumberField
 	$numberValue = Get-Random -Minimum 0 -Maximum 10
     
 	$SPListItem[$Field.InternalName] = [System.Convert]::ToInt32($numberValue)   
+}
+$global:abc = ""
+function Process-DateTimeField
+{
+    param
+	(
+        [Parameter(Mandatory=$true, Position=0)]
+		[Microsoft.SharePoint.SPListItem]$SPListItem,
+
+        [Parameter(Mandatory=$true, Position=1)]
+		$Field
+	)
+    
+	$SPListItem[$Field.InternalName] = $Field.DateTime
 }
 
 function Process-UserField
