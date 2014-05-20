@@ -393,7 +393,7 @@ function Process-TextField
 
     if(((Get-ChildItem $FolderPath).Count -gt 0))
     {  
-        $textFieldFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -like $Field.InternalName + "*"}
+        $textFieldFile = Get-FieldAssociatedFile $FolderPath $Field.InternalName
  
         $fieldName = [System.IO.Path]::GetFileNameWithoutExtension($textFieldFile)
 
@@ -426,7 +426,7 @@ function Process-TaxonomyField
 
     if(((Get-ChildItem $FolderPath).Count -gt 0))
     {  
-        $taxonomyFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -like $Field.AssociatedTermSet + "*" }
+        $taxonomyFile = Get-FieldAssociatedFile $FolderPath $TermSetName
 
         # Get a random taxonomy value
         $termSetValue = [System.IO.Path]::GetFileNameWithoutExtension($taxonomyFile)
@@ -532,7 +532,7 @@ function Process-UserField
 
     if(((Get-ChildItem $FolderPath).Count -gt 0))
     {  
-        $textFieldFile = Get-ChildItem $FolderPath | Where-Object {$_.Name -like $Field.InternalName + "*"}
+        $textFieldFile = Get-FieldAssociatedFile $FolderPath $Field.InternalName
  
         $fieldName = [System.IO.Path]::GetFileNameWithoutExtension($textFieldFile)
 
@@ -549,6 +549,21 @@ function Process-UserField
           $SPListItem[$fieldName] = $spUser  
         }
     }
+}
+
+function Get-FieldAssociatedFile
+{
+    param
+	(
+		[Parameter(Mandatory=$true, Position=0)]
+		$FolderPath,
+
+        [Parameter(Mandatory=$true, Position=1)]
+		$FileName
+	)
+
+    #Skip .template files
+    return Get-ChildItem $FolderPath | Where-Object {$_.BaseName -eq $FileName -and $_.Extension -eq ".txt"}
 }
 
 <#
