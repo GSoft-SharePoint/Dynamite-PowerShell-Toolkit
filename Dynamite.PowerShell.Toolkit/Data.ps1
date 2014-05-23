@@ -260,10 +260,10 @@ function Process-Fields
     # Text Fields
     if($ContentType.TextFields -ne $null)
     {
-
         $ContentType.TextFields.Field | ForEach-Object {
-                    
-            Process-TextField $SPListItem $folders["TextFields"] $_ 
+			Foreach ($textFieldFolder in $folders["TextFields"]) {	                    
+            	Process-TextField $SPListItem $textFieldFolder $_ 
+			}
         }
     }
 
@@ -271,8 +271,9 @@ function Process-Fields
     if($ContentType.ImageFields -ne $null)
     {
         $ContentType.ImageFields.Field | ForEach-Object {
-                    
-            Process-ImageField $SPListItem $folders["ImageFields"] $_    
+            Foreach ($imageFieldFolder in $folders["ImageFields"]) {	        
+            	Process-ImageField $SPListItem $imageFieldFolder $_
+			}
         }  
     }
 
@@ -280,8 +281,9 @@ function Process-Fields
     if($ContentType.TaxonomyFields -ne $null)
     {
         $ContentType.TaxonomyFields.Field | ForEach-Object {
-                    
-            Process-TaxonomyField $SPListItem $folders["TaxonomyFields"] $_  $_.AssociatedTermSet $_.AssociatedTermSetGroup   
+        	Foreach ($taxonomyFieldFolder in $folders["TaxonomyFields"]) {       
+            	Process-TaxonomyField $SPListItem $taxonomyFieldFolder $_  $_.AssociatedTermSet $_.AssociatedTermSetGroup
+			}
         }  
     }
 
@@ -289,8 +291,9 @@ function Process-Fields
     if($ContentType.HTMLFields -ne $null)
     {
         $ContentType.HTMLFields.Field | ForEach-Object {
-                    
-            Process-HTMLField $SPListItem $folders["HTMLFields"] $_  
+        	Foreach ($htmlFieldFolder in $folders["HTMLFields"]) {        
+            	Process-HTMLField $SPListItem $htmlFieldFolder $_
+			}
         }  
     }
 
@@ -325,8 +328,9 @@ function Process-Fields
     if($ContentType.UserFields -ne $null)
     {
         $ContentType.UserFields.Field | ForEach-Object {
-                    
-            Process-UserField $SPListItem $folders["UserFields"] $_  
+            Foreach ($userFieldFolder in $folders["UserFields"]) {        
+            	Process-UserField $SPListItem $userFieldFolder $_  
+			}
         }  
     }
 
